@@ -8,7 +8,7 @@ type Database struct {
 }
 
 func GetDB() (*Database, error) {
-	connStr := "host=localhost port=5432 user=postgres password=Benbryan1 dbname=yap sslmode=disable"
+	connStr := "host=localhost port=5432 user=brandon06 password=Benbryan1 dbname=yap sslmode=disable"
 	
 	// accessing database
 	db, err := sql.Open("postgres", connStr)
