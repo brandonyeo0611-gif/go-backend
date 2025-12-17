@@ -76,7 +76,7 @@ func HandleCreateUser(w http.ResponseWriter, r *http.Request) (*api.Response, er
 		} else {
 			return &api.Response{
 				Payload:   api.Payload{},
-				Messages:  []string{"Fail to create user"},
+				Messages:  []string{"Fail to create user2"},
 				ErrorCode: 103,
 			}, nil
 		}
@@ -101,7 +101,7 @@ func HandleCreateUser(w http.ResponseWriter, r *http.Request) (*api.Response, er
 }
 
 func HandleUserLogin(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
-	var user models.User 
+	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user) // decontruct the body to get the go code
 	if err != nil {
 		return &api.Response{
@@ -109,7 +109,7 @@ func HandleUserLogin(w http.ResponseWriter, r *http.Request) (*api.Response, err
 			Messages:  []string{"Fail to login"},
 			ErrorCode: 5000,
 		}, nil
-	} 
+	}
 
 	err = users.UserLogin(user)
 	if err != nil {
@@ -120,7 +120,7 @@ func HandleUserLogin(w http.ResponseWriter, r *http.Request) (*api.Response, err
 		}, nil
 	}
 	return &api.Response{
-		Payload: api.Payload{},
+		Payload:   api.Payload{},
 		Messages:  []string{"Correct username"},
 		ErrorCode: 0,
 	}, nil
@@ -136,7 +136,7 @@ func HandleCreatePost(w http.ResponseWriter, r *http.Request) (*api.Response, er
 			Messages:  []string{"Fail to create post"},
 			ErrorCode: 5000,
 		}, nil
-	} 
+	}
 	err = users.CreatePost(newPost)
 	if err != nil {
 		if errors.Is(err, users.ErrorShortPost) {
@@ -248,27 +248,27 @@ func HandleLikesComment(w http.ResponseWriter, r *http.Request) (*api.Response, 
 
 func HandleGetPostsByCategory(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
 	category := r.URL.Query().Get("category")
-	posts, err := users.PostsByCategory(category) 
+	posts, err := users.PostsByCategory(category)
 	if err != nil {
 		return &api.Response{
-            Payload:   api.Payload{},
-            Messages:  []string{"Failed to fetch posts"},
-            ErrorCode: 5000,
-        }, nil
+			Payload:   api.Payload{},
+			Messages:  []string{"Failed to fetch posts"},
+			ErrorCode: 5000,
+		}, nil
 	}
 	data, err := json.Marshal(posts)
 	if err != nil {
 		return &api.Response{
-            Payload:   api.Payload{},
-            Messages:  []string{"Failed to fetch posts"},
-            ErrorCode: 5001,
-        }, nil
+			Payload:   api.Payload{},
+			Messages:  []string{"Failed to fetch posts"},
+			ErrorCode: 5001,
+		}, nil
 	}
 	return &api.Response{
-            Payload:   api.Payload{Data: data,},
-            Messages:  []string{"Successfully fetch posts"},
-            ErrorCode: 0,
-        }, nil
+		Payload:   api.Payload{Data: data},
+		Messages:  []string{"Successfully fetch posts"},
+		ErrorCode: 0,
+	}, nil
 }
 
 func HandleGetComment(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
@@ -276,25 +276,25 @@ func HandleGetComment(w http.ResponseWriter, r *http.Request) (*api.Response, er
 	comments, err := users.PostComments(postID)
 	if err != nil {
 		return &api.Response{
-            Payload:   api.Payload{},
-            Messages:  []string{"Failed to fetch comments"},
-            ErrorCode: 5000,
-        }, nil
+			Payload:   api.Payload{},
+			Messages:  []string{"Failed to fetch comments"},
+			ErrorCode: 5000,
+		}, nil
 	}
 
 	data, err := json.Marshal(comments)
 	if err != nil {
 		return &api.Response{
-            Payload:   api.Payload{},
-            Messages:  []string{"Failed to fetch comments"},
-            ErrorCode: 5001,
-        }, nil
+			Payload:   api.Payload{},
+			Messages:  []string{"Failed to fetch comments"},
+			ErrorCode: 5001,
+		}, nil
 	}
 	return &api.Response{
-            Payload:   api.Payload{Data: data,},
-            Messages:  []string{"Successfully fetch comments"},
-            ErrorCode: 0,
-        }, nil
+		Payload:   api.Payload{Data: data},
+		Messages:  []string{"Successfully fetch comments"},
+		ErrorCode: 0,
+	}, nil
 }
 
 // remember that handlers does not decide the logic.. it just see if got error or not, should remain as short as possible
