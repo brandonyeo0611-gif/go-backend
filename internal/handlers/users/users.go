@@ -81,7 +81,7 @@ func HandleCreateUser(w http.ResponseWriter, r *http.Request) (*api.Response, er
 			}, nil
 		}
 	}
-
+	// writes back in JSON to return to frontend
 	data, err := json.Marshal(newUser)
 	if err != nil {
 		return &api.Response{

@@ -17,7 +17,7 @@ func GetRoutes() func(r chi.Router) {
 			json.NewEncoder(w).Encode(response)
 		})
 		// login is post so data is more safe
-
+		// routes that connect frontend to backend
 		r.Post("/users", func(w http.ResponseWriter, req *http.Request) {
 			response, _ := users.HandleCreateUser(w, req)
 			w.Header().Set("Content-Type", "application/json")

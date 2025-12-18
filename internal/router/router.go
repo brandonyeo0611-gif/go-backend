@@ -15,6 +15,8 @@ func Setup() chi.Router {
         AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
         AllowCredentials: true,
     }))
+	// connecting backend to frontend!! stuck here for ages
+	// if not cannot connect
 	setUpRoutes(r)
 	return r
 }
