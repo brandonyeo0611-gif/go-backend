@@ -68,6 +68,7 @@ func UserLogin(user models.User) error {
 	}
 	return nil
 }
+
 // no. of arguments in scan same as no. of arguments in select
 
 func CreatePost(post models.Post) error {
@@ -79,7 +80,7 @@ func CreatePost(post models.Post) error {
 		return ErrorShortPost
 	}
 
-	_, err = db.Conn.Exec("INSERT INTO post (user_id, content, content_type,title) VALUES ($1,$2,$3,$4)", post.UserID, post.Content, post.ContentType, post.Title)
+	_, err = db.Conn.Exec("INSERT INTO post (user_id, username, content, content_type,title) VALUES ($1,$2,$3,$4,$5)", post.UserID, post.Username, post.Content, post.ContentType, post.Title)
 	if err != nil {
 		return err
 	}
@@ -188,18 +189,80 @@ func UpdateLikesComment(commentlikes models.CommentLikes) error {
 	return err
 }
 
-func PostsByCategory(category string) ([]models.Post, error) {
+func PostsByCategory(category string) ([]models.FullPostStruct, error) {
 
 	db, err := database.GetDB()
 	if err != nil {
 		return nil, err
 	}
+	if category == "All" {
 
 	rows, err := db.Conn.Query(
-		`SELECT post_id, user_id, content, created_at, content_type, title
-		FROM post
+		`SELECT p.post_id, p.user_id, p.username, p.content, p.created_at, p.content_type, p.title, COALESCE(SUM(p1.like_value), 0) AS likes
+		FROM post p
+		LEFT JOIN post_likes p1 ON p.post_id = p1.post_id
+		GROUP BY
+    	p.post_id,
+   		p.user_id,
+    	p.username,
+    	p.content,
+    	p.created_at,
+    	p.content_type,
+    	p.title
+		ORDER BY p.created_at DESC, likes DESC`,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	// prevents data connection leakage
+	// what if in middle of for loop then got error
+
+	posts := []models.FullPostStruct{}
+	// make empty posts
+
+	for rows.Next() {
+		var p models.FullPostStruct
+		err = rows.Scan(
+			&p.PostID,
+			&p.UserID,
+			&p.Username,
+			&p.Content,
+			&p.CreatedAt,
+			&p.ContentType,
+			&p.Title,
+			&p.Likes,
+		)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	// checks for erros that happened during iterations, not when querying or scanning
+
+	return posts, nil
+
+
+	}
+
+	rows, err := db.Conn.Query(
+		`SELECT p.post_id, p.user_id, p.username, p.content, p.created_at, p.content_type, p.title, COALESCE(SUM(p1.like_value), 0) AS likes
+		FROM post p
+		LEFT JOIN post_likes p1 ON p.post_id = p1.post_id
 		WHERE content_type = $1
-		ORDER BY created_at DESC`,
+		GROUP BY
+    	p.post_id,
+   		p.user_id,
+    	p.username,
+    	p.content,
+    	p.created_at,
+    	p.content_type,
+    	p.title
+		ORDER BY p.created_at DESC, likes DESC`,
 		category,
 	)
 
@@ -210,18 +273,20 @@ func PostsByCategory(category string) ([]models.Post, error) {
 	// prevents data connection leakage
 	// what if in middle of for loop then got error
 
-	posts := []models.Post{}
+	posts := []models.FullPostStruct{}
 	// make empty posts
 
 	for rows.Next() {
-		var p models.Post
+		var p models.FullPostStruct
 		err = rows.Scan(
 			&p.PostID,
 			&p.UserID,
+			&p.Username,
 			&p.Content,
 			&p.CreatedAt,
 			&p.ContentType,
 			&p.Title,
+			&p.Likes,
 		)
 		if err != nil {
 			return nil, err
