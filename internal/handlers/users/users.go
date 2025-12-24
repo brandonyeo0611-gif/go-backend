@@ -6,10 +6,12 @@ import (
 	"net/http"
 
 	"github.com/CVWO/sample-go-app/internal/api"
+	"github.com/CVWO/sample-go-app/internal/auth"
 	users "github.com/CVWO/sample-go-app/internal/dataaccess"
 	"github.com/CVWO/sample-go-app/internal/database"
 	"github.com/CVWO/sample-go-app/internal/models"
 	"github.com/pkg/errors"
+	"github.com/CVWO/sample-go-app/internal/middleware"
 )
 
 const (
@@ -111,7 +113,7 @@ func HandleUserLogin(w http.ResponseWriter, r *http.Request) (*api.Response, err
 		}, nil
 	}
 
-	err = users.UserLogin(user)
+	id, err := users.UserLogin(user)
 	if err != nil {
 		return &api.Response{
 			Payload:   api.Payload{},
@@ -119,8 +121,33 @@ func HandleUserLogin(w http.ResponseWriter, r *http.Request) (*api.Response, err
 			ErrorCode: 1000,
 		}, nil
 	}
+
+	// generate a token to store the userID inside 
+	AccessToken, err := auth.GenerateAccessToken(id, user.Username)
+	if err != nil {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Access token failed to generate"},
+			ErrorCode: 1001,
+		}, nil
+	}
+	RefreshToken, err := auth.GenerateRefreshToken(id, user.Username)
+	if err != nil {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Refresh token failed to generate"},
+			ErrorCode: 1001,
+		}, nil
+	}
+
+	// return token to the frontend using the paylod
+	data, _ := json.Marshal(map[string]string{
+		"AccessToken": AccessToken,
+		"RefreshToken": RefreshToken,
+	})
+	// return userid data in data
 	return &api.Response{
-		Payload:   api.Payload{},
+		Payload:   api.Payload{Data: data},
 		Messages:  []string{"Correct username"},
 		ErrorCode: 0,
 	}, nil
@@ -137,6 +164,8 @@ func HandleCreatePost(w http.ResponseWriter, r *http.Request) (*api.Response, er
 			ErrorCode: 5000,
 		}, nil
 	}
+	UserID := r.Context().Value(middleware.UserIDFromContext).(int)
+	newPost.UserID = UserID
 	err = users.CreatePost(newPost)
 	if err != nil {
 		if errors.Is(err, users.ErrorShortPost) {

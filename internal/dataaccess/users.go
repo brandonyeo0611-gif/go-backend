@@ -48,11 +48,11 @@ func CreateUser(user models.User) error {
 	return nil
 }
 
-func UserLogin(user models.User) error {
+func UserLogin(user models.User) (int,error) {
 	db, err := database.GetDB()
 	if err != nil {
 		log.Println("CreateUser select error:", err)
-		return err
+		return 0, err
 	}
 
 	var id int
@@ -64,9 +64,9 @@ func UserLogin(user models.User) error {
 	).Scan(&id)
 	if err != nil {
 		log.Println("CreateUser select error:", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return id, nil
 }
 
 // no. of arguments in scan same as no. of arguments in select
