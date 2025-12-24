@@ -164,7 +164,15 @@ func HandleCreatePost(w http.ResponseWriter, r *http.Request) (*api.Response, er
 			ErrorCode: 5000,
 		}, nil
 	}
-	UserID := r.Context().Value(middleware.UserIDFromContext).(int)
+	UserID, ok := middleware.UserIDFromContext(r.Context())
+	// use ok cause it returns a bool and not an error
+	if !ok {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Fail to create post"},
+			ErrorCode: 5000,
+		}, nil
+	}
 	newPost.UserID = UserID
 	err = users.CreatePost(newPost)
 	if err != nil {
