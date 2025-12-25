@@ -341,5 +341,32 @@ func PostComments(postID string) ([]models.Comment, error) {
 	return comments, err
 }
 
+func GetPost(postID string) (*models.Post, error) {
+	db, err := database.GetDB()
+	if err != nil {
+		return nil, err
+
+		
+	}
+	var post models.Post
+
+	err = db.Conn.QueryRow(
+		`SELECT post_id, user_id, username, content, created_at, content_type, title
+		FROM post 
+		WHERE post_id = $1`, 
+		postID,
+	).Scan(&post.PostID,
+		&post.UserID,
+		&post.Username,
+		&post.Content,
+		&post.CreatedAt,
+		&post.ContentType,
+		&post.Title,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &post, nil
+}
 // SQL code
 // $1 is temporary placeholder, sorta like format string

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"github.com/go-chi/chi/v5"
 
 	"github.com/CVWO/sample-go-app/internal/api"
 	"github.com/CVWO/sample-go-app/internal/auth"
@@ -332,6 +333,32 @@ func HandleGetComment(w http.ResponseWriter, r *http.Request) (*api.Response, er
 		Messages:  []string{"Successfully fetch comments"},
 		ErrorCode: 0,
 	}, nil
+}
+
+func HandleGetPost(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
+	postID := chi.URLParam(r, "postID")
+	post, err := users.GetPost(postID)
+	if err != nil {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Failed to fetch post"},
+			ErrorCode: 5001,
+		}, nil
+	}
+
+	data, err := json.Marshal(post)
+	if err != nil {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Failed to marshal post"},
+			ErrorCode: 5002,
+		}, nil
+	}
+	return &api.Response{
+			Payload:   api.Payload{Data: data},
+			Messages:  []string{"successfully to fetch post"},
+			ErrorCode: 0,
+		}, nil
 }
 
 // remember that handlers does not decide the logic.. it just see if got error or not, should remain as short as possible
