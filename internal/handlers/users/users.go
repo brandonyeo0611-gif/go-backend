@@ -208,7 +208,16 @@ func HandleCreateComment(w http.ResponseWriter, r *http.Request) (*api.Response,
 			ErrorCode: 5000,
 		}, nil
 	}
-
+	UserID, ok := middleware.UserIDFromContext(r.Context())
+	// use ok cause it returns a bool and not an error
+	if !ok {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Fail to create post"},
+			ErrorCode: 5000,
+		}, nil
+	}
+	newComment.UserID = UserID
 	err = users.CreateComment(newComment)
 	if err != nil {
 		if errors.Is(err, users.ErrorShortComment) {

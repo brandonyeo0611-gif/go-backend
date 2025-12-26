@@ -8,7 +8,7 @@ type User struct {
 type Comment struct {
 	CommentID string `json:"comment_id"`
 	PostID string `json:"post_id"`
-	UserID int `json:"user_id"`
+	UserID int `json:"-"`
 	Content string `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
 }
