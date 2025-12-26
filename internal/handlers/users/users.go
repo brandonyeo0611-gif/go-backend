@@ -242,6 +242,15 @@ func HandleLikesPost(w http.ResponseWriter, r *http.Request) (*api.Response, err
 			ErrorCode: 5000,
 		}, nil
 	}
+	UserID, ok := middleware.UserIDFromContext(r.Context())
+	if !ok {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Fail to update likes"},
+			ErrorCode: 5000,
+		}, nil
+	}
+	newLike.UserID = UserID
 	err = users.UpdateLikesPost(newLike)
 	if err != nil {
 		return &api.Response{

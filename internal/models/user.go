@@ -25,7 +25,7 @@ type Post struct {
 
 type PostLikes struct {
 	PostID string `json:"post_id"`
-	UserID int `json:"user_id"`
+	UserID int `json:"-"`
 	LikeValue int `json:"like_value"`
 }
 
