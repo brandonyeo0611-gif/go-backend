@@ -302,33 +302,35 @@ func PostsByCategory(category string) ([]models.FullPostStruct, error) {
 
 }
 
-func PostComments(postID string) ([]models.Comment, error) {
+func PostComments(postID string) ([]models.CommentResponse, error) {
 	db, err := database.GetDB()
 	if err != nil {
 		return nil, err
 	}
 
 	rows, err := db.Conn.Query(
-		`SELECT comment_id, post_id, user_id, content, created_at
-		FROM comment
-		WHERE post_id = $1
-		ORDER BY created_at DESC`, postID,
+		`SELECT c.comment_id, c.post_id, c.user_id, c.content, c.created_at, u.username
+		FROM comment c
+		INNER JOIN users u ON c.user_id = u.user_id
+		WHERE c.post_id = $1
+		ORDER BY c.created_at DESC`, postID,
 	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	comments := []models.Comment{}
+	comments := []models.CommentResponse{}
 
 	for rows.Next() {
-		var c models.Comment
+		var c models.CommentResponse
 		err = rows.Scan(
 			&c.CommentID,
 			&c.PostID,
 			&c.UserID,
 			&c.Content,
 			&c.CreatedAt,
+			&c.Username,
 		)
 		if err != nil {
 			return nil, err
