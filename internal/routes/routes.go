@@ -69,6 +69,12 @@ func GetRoutes() func(r chi.Router) {
 				w.Header().Set("Content-Type", "application/json")
 				json.NewEncoder(w).Encode(response)
 			})
+			
+			r.Get("/like/{postID}", func(w http.ResponseWriter, req *http.Request) {
+				response, _ := users.HandleGetIndividualLike(w, req)
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(response)
+			})
 
 		})
 

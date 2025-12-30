@@ -48,7 +48,7 @@ func CreateUser(user models.User) error {
 	return nil
 }
 
-func UserLogin(user models.User) (int,error) {
+func UserLogin(user models.User) (int, error) {
 	db, err := database.GetDB()
 	if err != nil {
 		log.Println("CreateUser select error:", err)
@@ -197,8 +197,8 @@ func PostsByCategory(category string) ([]models.FullPostStruct, error) {
 	}
 	if category == "All" {
 
-	rows, err := db.Conn.Query(
-		`SELECT p.post_id, p.user_id, p.username, p.content, p.created_at, p.content_type, p.title, COALESCE(SUM(p1.like_value), 0) AS likes
+		rows, err := db.Conn.Query(
+			`SELECT p.post_id, p.user_id, p.username, p.content, p.created_at, p.content_type, p.title, COALESCE(SUM(p1.like_value), 0) AS likes
 		FROM post p
 		LEFT JOIN post_likes p1 ON p.post_id = p1.post_id
 		GROUP BY
@@ -210,42 +210,41 @@ func PostsByCategory(category string) ([]models.FullPostStruct, error) {
     	p.content_type,
     	p.title
 		ORDER BY p.created_at DESC, likes DESC`,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	// prevents data connection leakage
-	// what if in middle of for loop then got error
-
-	posts := []models.FullPostStruct{}
-	// make empty posts
-
-	for rows.Next() {
-		var p models.FullPostStruct
-		err = rows.Scan(
-			&p.PostID,
-			&p.UserID,
-			&p.Username,
-			&p.Content,
-			&p.CreatedAt,
-			&p.ContentType,
-			&p.Title,
-			&p.Likes,
 		)
+
 		if err != nil {
 			return nil, err
 		}
-		posts = append(posts, p)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	// checks for erros that happened during iterations, not when querying or scanning
+		defer rows.Close()
+		// prevents data connection leakage
+		// what if in middle of for loop then got error
 
-	return posts, nil
+		posts := []models.FullPostStruct{}
+		// make empty posts
 
+		for rows.Next() {
+			var p models.FullPostStruct
+			err = rows.Scan(
+				&p.PostID,
+				&p.UserID,
+				&p.Username,
+				&p.Content,
+				&p.CreatedAt,
+				&p.ContentType,
+				&p.Title,
+				&p.Likes,
+			)
+			if err != nil {
+				return nil, err
+			}
+			posts = append(posts, p)
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
+		// checks for erros that happened during iterations, not when querying or scanning
+
+		return posts, nil
 
 	}
 
@@ -348,14 +347,13 @@ func GetPost(postID string) (*models.Post, error) {
 	if err != nil {
 		return nil, err
 
-		
 	}
 	var post models.Post
 
 	err = db.Conn.QueryRow(
 		`SELECT post_id, user_id, username, content, created_at, content_type, title
 		FROM post 
-		WHERE post_id = $1`, 
+		WHERE post_id = $1`,
 		postID,
 	).Scan(&post.PostID,
 		&post.UserID,
@@ -370,5 +368,25 @@ func GetPost(postID string) (*models.Post, error) {
 	}
 	return &post, nil
 }
+
+func GetIndividualLike(userID int, postID string) (int, error) {
+	db, err := database.GetDB()
+	if err != nil {
+		return 0, err
+	}
+	var likeValue int
+	err = db.Conn.QueryRow(
+		`SELECT like_value FROM post_likes WHERE post_id = $1 AND user_id = $2`, postID, userID,
+	).Scan(&likeValue)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil
+		}
+		return 0, err // gpt say this one clearer though no diff
+	}
+	return likeValue, err
+}
+
 // SQL code
 // $1 is temporary placeholder, sorta like format string

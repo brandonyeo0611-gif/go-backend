@@ -3,16 +3,16 @@ package users
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"github.com/go-chi/chi/v5"
+	"net/http"
 
 	"github.com/CVWO/sample-go-app/internal/api"
 	"github.com/CVWO/sample-go-app/internal/auth"
 	users "github.com/CVWO/sample-go-app/internal/dataaccess"
 	"github.com/CVWO/sample-go-app/internal/database"
+	"github.com/CVWO/sample-go-app/internal/middleware"
 	"github.com/CVWO/sample-go-app/internal/models"
 	"github.com/pkg/errors"
-	"github.com/CVWO/sample-go-app/internal/middleware"
 )
 
 const (
@@ -123,7 +123,7 @@ func HandleUserLogin(w http.ResponseWriter, r *http.Request) (*api.Response, err
 		}, nil
 	}
 
-	// generate a token to store the userID inside 
+	// generate a token to store the userID inside
 	AccessToken, err := auth.GenerateAccessToken(id, user.Username)
 	if err != nil {
 		return &api.Response{
@@ -143,7 +143,7 @@ func HandleUserLogin(w http.ResponseWriter, r *http.Request) (*api.Response, err
 
 	// return token to the frontend using the paylod
 	data, _ := json.Marshal(map[string]string{
-		"AccessToken": AccessToken,
+		"AccessToken":  AccessToken,
 		"RefreshToken": RefreshToken,
 	})
 	// return userid data in data
@@ -373,8 +373,41 @@ func HandleGetPost(w http.ResponseWriter, r *http.Request) (*api.Response, error
 		}, nil
 	}
 	return &api.Response{
-			Payload:   api.Payload{Data: data},
-			Messages:  []string{"successfully to fetch post"},
+		Payload:   api.Payload{Data: data},
+		Messages:  []string{"successfully to fetch post"},
+		ErrorCode: 0,
+	}, nil
+}
+
+func HandleGetIndividualLike(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
+	postID := chi.URLParam(r, "postID")
+	UserID, ok := middleware.UserIDFromContext(r.Context())
+	if !ok {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Failed to fetch like value"},
+			ErrorCode: 5001,
+		}, nil
+	}
+	likeValue, err := users.GetIndividualLike(UserID, postID)
+	if err!= nil {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Failed to fetch like value"},
+			ErrorCode: 5001,
+		}, nil
+	}
+	likeBytes, err := json.Marshal(likeValue)
+	if err!= nil {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Failed to fetch like value"},
+			ErrorCode: 5001,
+		}, nil
+	}
+	return &api.Response{
+			Payload:   api.Payload{Data: json.RawMessage(likeBytes)},
+			Messages:  []string{"successfully to fetch like value"},
 			ErrorCode: 0,
 		}, nil
 }
