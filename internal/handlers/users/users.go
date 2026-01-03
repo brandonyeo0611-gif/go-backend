@@ -24,12 +24,7 @@ const (
 	ErrEncodeView              = "Failed to retrieve users in %s"
 )
 
-func HandleList(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
-	db, err := database.GetDB()
-
-	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf(ErrRetrieveDatabase, ListUsers))
-	}
+func HandleList(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
 
 	users, err := users.List(db)
 	if err != nil {
@@ -49,7 +44,7 @@ func HandleList(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
 	}, nil
 }
 
-func HandleCreateUser(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
+func HandleCreateUser(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
 	var newUser models.User
 	err := json.NewDecoder(r.Body).Decode(&newUser)
 	if err != nil {
@@ -68,7 +63,7 @@ func HandleCreateUser(w http.ResponseWriter, r *http.Request) (*api.Response, er
 		}, nil
 	}
 
-	err = users.CreateUser(newUser)
+	err = users.CreateUser(newUser, db)
 	if err != nil {
 		if err == users.ErrorUserNameTaken {
 			return &api.Response{
@@ -103,7 +98,7 @@ func HandleCreateUser(w http.ResponseWriter, r *http.Request) (*api.Response, er
 	}, nil
 }
 
-func HandleUserLogin(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
+func HandleUserLogin(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
 	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user) // decontruct the body to get the go code
 	if err != nil {
@@ -114,7 +109,7 @@ func HandleUserLogin(w http.ResponseWriter, r *http.Request) (*api.Response, err
 		}, nil
 	}
 
-	id, err := users.UserLogin(user)
+	id, err := users.UserLogin(user, db)
 	if err != nil {
 		return &api.Response{
 			Payload:   api.Payload{},
@@ -155,7 +150,7 @@ func HandleUserLogin(w http.ResponseWriter, r *http.Request) (*api.Response, err
 
 }
 
-func HandleCreatePost(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
+func HandleCreatePost(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
 	var newPost models.Post
 	err := json.NewDecoder(r.Body).Decode(&newPost) // decontruct the body to get the go code
 	if err != nil {
@@ -175,7 +170,7 @@ func HandleCreatePost(w http.ResponseWriter, r *http.Request) (*api.Response, er
 		}, nil
 	}
 	newPost.UserID = UserID
-	err = users.CreatePost(newPost)
+	err = users.CreatePost(newPost, db)
 	if err != nil {
 		if errors.Is(err, users.ErrorShortPost) {
 			return &api.Response{
@@ -198,7 +193,7 @@ func HandleCreatePost(w http.ResponseWriter, r *http.Request) (*api.Response, er
 
 }
 
-func HandleCreateComment(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
+func HandleCreateComment(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
 	var newComment models.Comment
 	err := json.NewDecoder(r.Body).Decode(&newComment)
 	if err != nil {
@@ -218,7 +213,7 @@ func HandleCreateComment(w http.ResponseWriter, r *http.Request) (*api.Response,
 		}, nil
 	}
 	newComment.UserID = UserID
-	err = users.CreateComment(newComment)
+	err = users.CreateComment(newComment, db)
 	if err != nil {
 		if errors.Is(err, users.ErrorShortComment) {
 			return &api.Response{
@@ -241,7 +236,7 @@ func HandleCreateComment(w http.ResponseWriter, r *http.Request) (*api.Response,
 	}, nil
 }
 
-func HandleLikesPost(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
+func HandleLikesPost(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
 	var newLike models.PostLikes
 	err := json.NewDecoder(r.Body).Decode(&newLike)
 	if err != nil {
@@ -260,7 +255,7 @@ func HandleLikesPost(w http.ResponseWriter, r *http.Request) (*api.Response, err
 		}, nil
 	}
 	newLike.UserID = UserID
-	err = users.UpdateLikesPost(newLike)
+	err = users.UpdateLikesPost(newLike, db)
 	if err != nil {
 		return &api.Response{
 			Payload:   api.Payload{},
@@ -276,7 +271,7 @@ func HandleLikesPost(w http.ResponseWriter, r *http.Request) (*api.Response, err
 	}, nil
 }
 
-func HandleLikesComment(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
+func HandleLikesComment(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
 	var newLike models.CommentLikes
 	err := json.NewDecoder(r.Body).Decode(&newLike)
 	if err != nil {
@@ -287,7 +282,7 @@ func HandleLikesComment(w http.ResponseWriter, r *http.Request) (*api.Response, 
 		}, nil
 	}
 
-	err = users.UpdateLikesComment(newLike)
+	err = users.UpdateLikesComment(newLike, db)
 	if err != nil {
 		return &api.Response{
 			Payload:   api.Payload{},
@@ -302,9 +297,9 @@ func HandleLikesComment(w http.ResponseWriter, r *http.Request) (*api.Response, 
 	}, nil
 }
 
-func HandleGetPostsByCategory(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
+func HandleGetPostsByCategory(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
 	category := r.URL.Query().Get("category")
-	posts, err := users.PostsByCategory(category)
+	posts, err := users.PostsByCategory(category, db)
 	if err != nil {
 		return &api.Response{
 			Payload:   api.Payload{},
@@ -327,9 +322,9 @@ func HandleGetPostsByCategory(w http.ResponseWriter, r *http.Request) (*api.Resp
 	}, nil
 }
 
-func HandleGetComment(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
+func HandleGetComment(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
 	postID := r.URL.Query().Get("post")
-	comments, err := users.PostComments(postID)
+	comments, err := users.PostComments(postID, db)
 	if err != nil {
 		return &api.Response{
 			Payload:   api.Payload{},
@@ -353,9 +348,9 @@ func HandleGetComment(w http.ResponseWriter, r *http.Request) (*api.Response, er
 	}, nil
 }
 
-func HandleGetPost(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
+func HandleGetPost(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
 	postID := chi.URLParam(r, "postID")
-	post, err := users.GetPost(postID)
+	post, err := users.GetPost(postID, db)
 	if err != nil {
 		return &api.Response{
 			Payload:   api.Payload{},
@@ -379,7 +374,7 @@ func HandleGetPost(w http.ResponseWriter, r *http.Request) (*api.Response, error
 	}, nil
 }
 
-func HandleGetIndividualLike(w http.ResponseWriter, r *http.Request) (*api.Response, error) {
+func HandleGetIndividualLike(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
 	postID := chi.URLParam(r, "postID")
 	UserID, ok := middleware.UserIDFromContext(r.Context())
 	if !ok {
@@ -389,7 +384,7 @@ func HandleGetIndividualLike(w http.ResponseWriter, r *http.Request) (*api.Respo
 			ErrorCode: 5001,
 		}, nil
 	}
-	likeValue, err := users.GetIndividualLike(UserID, postID)
+	likeValue, err := users.GetIndividualLike(UserID, postID, db)
 	if err!= nil {
 		return &api.Response{
 			Payload:   api.Payload{},

@@ -1,13 +1,14 @@
 package router
 
 import (
+	"github.com/CVWO/sample-go-app/internal/database"
 	"github.com/CVWO/sample-go-app/internal/routes"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 )
 
 
-func Setup() chi.Router {
+func Setup(db *database.Database) chi.Router {
 	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
         AllowedOrigins:   []string{"http://localhost:3000"}, // your frontend URL
@@ -17,10 +18,10 @@ func Setup() chi.Router {
     }))
 	// connecting backend to frontend!! stuck here for ages
 	// if not cannot connect
-	setUpRoutes(r)
+	setUpRoutes(r, db)
 	return r
 }
 
-func setUpRoutes(r chi.Router) {
-	r.Group(routes.GetRoutes())
+func setUpRoutes(r chi.Router, db *database.Database) {
+	r.Group(routes.GetRoutes(db))
 }

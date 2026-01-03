@@ -23,15 +23,10 @@ func List(db *database.Database) ([]models.User, error) {
 	return users, nil
 }
 
-func CreateUser(user models.User) error {
-	db, err := database.GetDB()
-	if err != nil {
-		log.Println("CreateUser select error:", err)
-		return err
-	}
+func CreateUser(user models.User, db *database.Database) error {
 
 	var id int                                                                                      // create a variable of id first
-	err = db.Conn.QueryRow("SELECT user_id FROM users WHERE username=$1 ", user.Username).Scan(&id) // fills id with existing user's user_id
+	err := db.Conn.QueryRow("SELECT user_id FROM users WHERE username=$1 ", user.Username).Scan(&id) // fills id with existing user's user_id
 	if err == nil {
 		return ErrorUserNameTaken
 	} else if err != sql.ErrNoRows {
@@ -48,15 +43,10 @@ func CreateUser(user models.User) error {
 	return nil
 }
 
-func UserLogin(user models.User) (int, error) {
-	db, err := database.GetDB()
-	if err != nil {
-		log.Println("CreateUser select error:", err)
-		return 0, err
-	}
+func UserLogin(user models.User, db *database.Database) (int, error) {
 
 	var id int
-	err = db.Conn.QueryRow(
+	err := db.Conn.QueryRow(
 		`SELECT user_id
 		FROM users
 		WHERE username = $1`,
@@ -71,16 +61,12 @@ func UserLogin(user models.User) (int, error) {
 
 // no. of arguments in scan same as no. of arguments in select
 
-func CreatePost(post models.Post) error {
-	db, err := database.GetDB()
-	if err != nil {
-		return err
-	}
+func CreatePost(post models.Post, db *database.Database) error {
 	if len(post.Content) < 100 {
 		return ErrorShortPost
 	}
 
-	_, err = db.Conn.Exec("INSERT INTO post (user_id, username, content, content_type,title) VALUES ($1,$2,$3,$4,$5)", post.UserID, post.Username, post.Content, post.ContentType, post.Title)
+	_, err := db.Conn.Exec("INSERT INTO post (user_id, username, content, content_type,title) VALUES ($1,$2,$3,$4,$5)", post.UserID, post.Username, post.Content, post.ContentType, post.Title)
 	if err != nil {
 		return err
 	}
@@ -88,16 +74,12 @@ func CreatePost(post models.Post) error {
 
 }
 
-func CreateComment(comment models.Comment) error {
-	db, err := database.GetDB()
-	if err != nil {
-		return err
-	}
+func CreateComment(comment models.Comment, db *database.Database) error {
 	if len(comment.Content) < 50 {
 		return ErrorShortComment
 	}
 
-	_, err = db.Conn.Exec("INSERT INTO comment (post_id,user_id, content) VALUES ($1,$2,$3)", comment.PostID, comment.UserID, comment.Content)
+	_, err := db.Conn.Exec("INSERT INTO comment (post_id,user_id, content) VALUES ($1,$2,$3)", comment.PostID, comment.UserID, comment.Content)
 	if err != nil {
 		return err
 	}
@@ -105,14 +87,10 @@ func CreateComment(comment models.Comment) error {
 
 }
 
-func UpdateLikesPost(postlikes models.PostLikes) error {
-	db, err := database.GetDB()
-	if err != nil {
-		return err
-	}
+func UpdateLikesPost(postlikes models.PostLikes, db *database.Database) error {
 
 	var have int
-	err = db.Conn.QueryRow(
+	err := db.Conn.QueryRow(
 		`SELECT like_value FROM post_likes
 		WHERE post_id = $1 AND user_id = $2`,
 		postlikes.PostID, postlikes.UserID,
@@ -147,13 +125,10 @@ func UpdateLikesPost(postlikes models.PostLikes) error {
 
 }
 
-func UpdateLikesComment(commentlikes models.CommentLikes) error {
-	db, err := database.GetDB()
-	if err != nil {
-		return err
-	}
+func UpdateLikesComment(commentlikes models.CommentLikes, db *database.Database) error {
+
 	var have int
-	err = db.Conn.QueryRow(
+	err := db.Conn.QueryRow(
 		`SELECT like_value 
 		FROM comment_likes 
 		WHERE comment_id = $1 
@@ -189,12 +164,8 @@ func UpdateLikesComment(commentlikes models.CommentLikes) error {
 	return err
 }
 
-func PostsByCategory(category string) ([]models.FullPostStruct, error) {
+func PostsByCategory(category string, db *database.Database) ([]models.FullPostStruct, error) {
 
-	db, err := database.GetDB()
-	if err != nil {
-		return nil, err
-	}
 	if category == "All" {
 
 		rows, err := db.Conn.Query(
@@ -301,11 +272,7 @@ func PostsByCategory(category string) ([]models.FullPostStruct, error) {
 
 }
 
-func PostComments(postID string) ([]models.CommentResponse, error) {
-	db, err := database.GetDB()
-	if err != nil {
-		return nil, err
-	}
+func PostComments(postID string, db *database.Database) ([]models.CommentResponse, error) {
 
 	rows, err := db.Conn.Query(
 		`SELECT c.comment_id, c.post_id, c.user_id, c.content, c.created_at, u.username
@@ -342,15 +309,11 @@ func PostComments(postID string) ([]models.CommentResponse, error) {
 	return comments, err
 }
 
-func GetPost(postID string) (*models.Post, error) {
-	db, err := database.GetDB()
-	if err != nil {
-		return nil, err
+func GetPost(postID string, db *database.Database) (*models.Post, error) {
 
-	}
 	var post models.Post
 
-	err = db.Conn.QueryRow(
+	err := db.Conn.QueryRow(
 		`SELECT post_id, user_id, username, content, created_at, content_type, title
 		FROM post 
 		WHERE post_id = $1`,
@@ -369,13 +332,10 @@ func GetPost(postID string) (*models.Post, error) {
 	return &post, nil
 }
 
-func GetIndividualLike(userID int, postID string) (int, error) {
-	db, err := database.GetDB()
-	if err != nil {
-		return 0, err
-	}
+func GetIndividualLike(userID int, postID string, db *database.Database) (int, error) {
+
 	var likeValue int
-	err = db.Conn.QueryRow(
+	err := db.Conn.QueryRow(
 		`SELECT like_value FROM post_likes WHERE post_id = $1 AND user_id = $2`, postID, userID,
 	).Scan(&likeValue)
 
