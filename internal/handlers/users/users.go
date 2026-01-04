@@ -3,8 +3,10 @@ package users
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi/v5"
 	"net/http"
+	"strings"
+
+	"github.com/go-chi/chi/v5"
 
 	"github.com/CVWO/sample-go-app/internal/api"
 	"github.com/CVWO/sample-go-app/internal/auth"
@@ -385,7 +387,7 @@ func HandleGetIndividualLike(w http.ResponseWriter, r *http.Request, db *databas
 		}, nil
 	}
 	likeValue, err := users.GetIndividualLike(UserID, postID, db)
-	if err!= nil {
+	if err != nil {
 		return &api.Response{
 			Payload:   api.Payload{},
 			Messages:  []string{"Failed to fetch like value"},
@@ -393,7 +395,7 @@ func HandleGetIndividualLike(w http.ResponseWriter, r *http.Request, db *databas
 		}, nil
 	}
 	likeBytes, err := json.Marshal(likeValue)
-	if err!= nil {
+	if err != nil {
 		return &api.Response{
 			Payload:   api.Payload{},
 			Messages:  []string{"Failed to fetch like value"},
@@ -401,10 +403,41 @@ func HandleGetIndividualLike(w http.ResponseWriter, r *http.Request, db *databas
 		}, nil
 	}
 	return &api.Response{
-			Payload:   api.Payload{Data: json.RawMessage(likeBytes)},
-			Messages:  []string{"successfully to fetch like value"},
-			ErrorCode: 0,
+		Payload:   api.Payload{Data: json.RawMessage(likeBytes)},
+		Messages:  []string{"successfully to fetch like value"},
+		ErrorCode: 0,
+	}, nil
+}
+
+func HandleRefreshAccessToken(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
+	// getting the token
+	Header := r.Header.Get("Authorization")
+	tokenStr := strings.Replace(Header, "Bearer ", "", 1)
+	claims, err := auth.ValidateRefreshToken(tokenStr)
+	if err != nil {
+		return &api.Response{
+			Payload:   api.Payload{Data: []byte(`{}`)},
+			Messages:  []string{"Fail to validate refresh token"},
+			ErrorCode: 2,
 		}, nil
+	}
+	AccessToken, err := auth.GenerateAccessToken(claims.UserID, claims.Username)
+	if err != nil {
+		return &api.Response{
+			Payload:   api.Payload{Data: []byte(`{}`)},
+			Messages:  []string{"Fail to renew refreshtoken"},
+			ErrorCode: 1,
+		}, nil
+	}
+	data, _ := json.Marshal(map[string]string{
+		"AccessToken":  AccessToken,
+	})
+	// return userid data in data
+	return &api.Response{
+		Payload:   api.Payload{Data: data},
+		Messages:  []string{"Correct username"},
+		ErrorCode: 0,
+	}, nil
 }
 
 // remember that handlers does not decide the logic.. it just see if got error or not, should remain as short as possible

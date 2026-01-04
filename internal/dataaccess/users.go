@@ -348,5 +348,8 @@ func GetIndividualLike(userID int, postID string, db *database.Database) (int, e
 	return likeValue, err
 }
 
+func RefreshAccessToken(RefreshToken string) {
+	
+}
 // SQL code
 // $1 is temporary placeholder, sorta like format string

@@ -21,10 +21,10 @@ func GetRoutes(db *database.Database) func(r chi.Router) {
 			json.NewEncoder(w).Encode(response)
 		})
 		r.Get("/posts/{postID}", func(w http.ResponseWriter, req *http.Request) {
-				response, _ := users.HandleGetPost(w, req, db)
-				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(response)
-			})
+			response, _ := users.HandleGetPost(w, req, db)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(response)
+		})
 		// login is post so data is more safe
 		// routes that connect frontend to backend
 		r.Post("/users", func(w http.ResponseWriter, req *http.Request) {
@@ -40,6 +40,11 @@ func GetRoutes(db *database.Database) func(r chi.Router) {
 		})
 		r.Get("/comments", func(w http.ResponseWriter, req *http.Request) {
 			response, _ := users.HandleGetComment(w, req, db)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(response)
+		})
+		r.Post("/RefreshAccessToken", func(w http.ResponseWriter, req *http.Request) {
+			response, _ := users.HandleRefreshAccessToken(w, req, db)
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(response)
 		})
@@ -70,7 +75,7 @@ func GetRoutes(db *database.Database) func(r chi.Router) {
 				w.Header().Set("Content-Type", "application/json")
 				json.NewEncoder(w).Encode(response)
 			})
-			
+
 			r.Get("/like/{postID}", func(w http.ResponseWriter, req *http.Request) {
 				response, _ := users.HandleGetIndividualLike(w, req, db)
 				w.Header().Set("Content-Type", "application/json")

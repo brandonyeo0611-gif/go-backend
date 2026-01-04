@@ -27,7 +27,7 @@ func GenerateRefreshToken(userID int, username string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// creates a token with the claims
 	// signs the token using
-	return token.SignedString(([]byte("tryingtoauth")))
+	return token.SignedString(([]byte("RefreshToken")))
 }
 
 func GenerateAccessToken(userID int, username string) (string, error) {
@@ -48,6 +48,23 @@ func GenerateAccessToken(userID int, username string) (string, error) {
 func ValidateToken(tokenStr string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte("tryingtoauth"), nil
+	})
+	// verify signature and fills the empty claim struc with decoded data and return token
+
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+		return claims, nil
+	}
+	// return userid and uername
+	return nil, fmt.Errorf("invalid token")
+}
+
+func ValidateRefreshToken(tokenStr string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte("RefreshToken"), nil
 	})
 	// verify signature and fills the empty claim struc with decoded data and return token
 
