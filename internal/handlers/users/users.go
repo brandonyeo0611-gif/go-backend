@@ -152,6 +152,58 @@ func HandleUserLogin(w http.ResponseWriter, r *http.Request, db *database.Databa
 
 }
 
+func HandleChangeProfilePic(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
+	UserID, ok := middleware.UserIDFromContext(r.Context())
+	if (!ok) {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Fail to change profile pic"},
+			ErrorCode: 5000,
+		}, nil
+	}
+	Username, ok := middleware.UsernameFromContext(r.Context())
+	if (!ok) {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Fail to change profile pic"},
+			ErrorCode: 5000,
+		}, nil
+	}
+
+	var body struct {
+		ProfileURL string `json:"profile_url"`
+	}
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Fail to change profile pic"},
+			ErrorCode: 5000,
+		}, nil
+	} 
+	user := models.User{
+		UserID: UserID,
+		Username: Username,
+		ProfileURL: &body.ProfileURL,
+	}
+	
+	// decontruct the body to get the go code
+	err = users.ChangeProfilePic(user, db)
+	if err != nil {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Fail to change profile pic"},
+			ErrorCode: 5001,
+		}, nil
+	}
+	return &api.Response{
+		Payload:   api.Payload{},
+		Messages:  []string{"Successfully Changed User profile picture"},
+		ErrorCode: 0,
+	}, nil
+
+}
+
 func HandleCreatePost(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
 	var newPost models.Post
 	err := json.NewDecoder(r.Body).Decode(&newPost) // decontruct the body to get the go code
@@ -430,7 +482,7 @@ func HandleRefreshAccessToken(w http.ResponseWriter, r *http.Request, db *databa
 		}, nil
 	}
 	data, _ := json.Marshal(map[string]string{
-		"AccessToken":  AccessToken,
+		"AccessToken": AccessToken,
 	})
 	// return userid data in data
 	return &api.Response{

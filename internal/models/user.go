@@ -3,6 +3,7 @@ import "time"
 type User struct {
 	UserID   int    `json:"user_id"`
 	Username string `json:"username"`
+	ProfileURL *string `json:"profile_url"`
 }
 
 type Comment struct {

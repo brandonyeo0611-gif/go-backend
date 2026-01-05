@@ -59,6 +59,20 @@ func UserLogin(user models.User, db *database.Database) (int, error) {
 	return id, nil
 }
 
+func ChangeProfilePic(user models.User, db *database.Database) error {
+	_, err := db.Conn.Exec(
+		`UPDATE users
+		SET profile_url = $1
+		WHERE username = $2 AND user_id = $3`,
+		*user.ProfileURL,user.Username, user.UserID,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+
 // no. of arguments in scan same as no. of arguments in select
 
 func CreatePost(post models.Post, db *database.Database) error {
