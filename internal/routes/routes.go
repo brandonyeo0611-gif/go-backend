@@ -88,6 +88,12 @@ func GetRoutes(db *database.Database) func(r chi.Router) {
 				json.NewEncoder(w).Encode(response)
 			})
 
+			r.Get("/users/profile_pic", func(w http.ResponseWriter, req *http.Request) {
+				response, _ := users.HandleGetProfilePic(w, req, db)
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(response)
+			})
+
 		})
 
 	}

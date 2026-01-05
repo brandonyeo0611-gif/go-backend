@@ -154,7 +154,7 @@ func HandleUserLogin(w http.ResponseWriter, r *http.Request, db *database.Databa
 
 func HandleChangeProfilePic(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
 	UserID, ok := middleware.UserIDFromContext(r.Context())
-	if (!ok) {
+	if !ok {
 		return &api.Response{
 			Payload:   api.Payload{},
 			Messages:  []string{"Fail to change profile pic"},
@@ -162,7 +162,7 @@ func HandleChangeProfilePic(w http.ResponseWriter, r *http.Request, db *database
 		}, nil
 	}
 	Username, ok := middleware.UsernameFromContext(r.Context())
-	if (!ok) {
+	if !ok {
 		return &api.Response{
 			Payload:   api.Payload{},
 			Messages:  []string{"Fail to change profile pic"},
@@ -180,13 +180,13 @@ func HandleChangeProfilePic(w http.ResponseWriter, r *http.Request, db *database
 			Messages:  []string{"Fail to change profile pic"},
 			ErrorCode: 5000,
 		}, nil
-	} 
+	}
 	user := models.User{
-		UserID: UserID,
-		Username: Username,
+		UserID:     UserID,
+		Username:   Username,
 		ProfileURL: &body.ProfileURL,
 	}
-	
+
 	// decontruct the body to get the go code
 	err = users.ChangeProfilePic(user, db)
 	if err != nil {
@@ -202,6 +202,50 @@ func HandleChangeProfilePic(w http.ResponseWriter, r *http.Request, db *database
 		ErrorCode: 0,
 	}, nil
 
+}
+
+func HandleGetProfilePic(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
+	UserID, ok := middleware.UserIDFromContext(r.Context())
+	if !ok {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Fail to get profile pic"},
+			ErrorCode: 5000,
+		}, nil
+	}
+	Username, ok := middleware.UsernameFromContext(r.Context())
+	if !ok {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Fail to change profile pic"},
+			ErrorCode: 5000,
+		}, nil
+	}
+
+	var response string
+	err := db.Conn.QueryRow(
+		`SELECT profile_url 
+		FROM users 
+		WHERE user_id = $1 AND username = $2`, UserID, Username,
+	).Scan(&response)
+
+	if err != nil {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Fail to get profile pic"},
+			ErrorCode: 5001,
+		}, nil
+	}
+
+	data, err := json.Marshal(map[string]string{
+		"profile_url": response,
+	})
+
+	return &api.Response{
+		Payload:   api.Payload{Data: data},
+		Messages:  []string{"Successfully get User profile picture"},
+		ErrorCode: 0,
+	}, nil
 }
 
 func HandleCreatePost(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
