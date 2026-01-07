@@ -3,6 +3,7 @@ package users
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -205,40 +206,30 @@ func HandleChangeProfilePic(w http.ResponseWriter, r *http.Request, db *database
 }
 
 func HandleGetProfilePic(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
-	UserID, ok := middleware.UserIDFromContext(r.Context())
-	if !ok {
-		return &api.Response{
-			Payload:   api.Payload{},
-			Messages:  []string{"Fail to get profile pic"},
-			ErrorCode: 5000,
-		}, nil
-	}
-	Username, ok := middleware.UsernameFromContext(r.Context())
-	if !ok {
-		return &api.Response{
-			Payload:   api.Payload{},
-			Messages:  []string{"Fail to change profile pic"},
-			ErrorCode: 5000,
-		}, nil
-	}
+	Username := r.URL.Query().Get("username")
 
-	var response string
+	var response models.User
 	err := db.Conn.QueryRow(
-		`SELECT profile_url 
+		`SELECT user_id, username, profile_url 
 		FROM users 
-		WHERE user_id = $1 AND username = $2`, UserID, Username,
-	).Scan(&response)
+		WHERE username = $1`, Username,
+	).Scan(&response.UserID,&response.Username, &response.ProfileURL)
 
 	if err != nil {
+		log.Printf("Profile pic error for '%s': %v", response.Username, err)
 		return &api.Response{
 			Payload:   api.Payload{},
 			Messages:  []string{"Fail to get profile pic"},
 			ErrorCode: 5001,
 		}, nil
 	}
+	url := ""
+	if response.ProfileURL != nil {
+		url = *response.ProfileURL
+	}
 
 	data, err := json.Marshal(map[string]string{
-		"profile_url": response,
+		"profile_url": url,
 	})
 
 	return &api.Response{

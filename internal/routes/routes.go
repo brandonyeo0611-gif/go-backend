@@ -48,6 +48,12 @@ func GetRoutes(db *database.Database) func(r chi.Router) {
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(response)
 		})
+		
+		r.Get("/users/profile_pic", func(w http.ResponseWriter, req *http.Request) {
+			response, _ := users.HandleGetProfilePic(w, req, db)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(response)
+		})
 
 		// private routes : routes that need the token
 		r.Group(func(r chi.Router) {
@@ -84,12 +90,6 @@ func GetRoutes(db *database.Database) func(r chi.Router) {
 
 			r.Put("/users/profile_pic", func(w http.ResponseWriter, req *http.Request) {
 				response, _ := users.HandleChangeProfilePic(w, req, db)
-				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(response)
-			})
-
-			r.Get("/users/profile_pic", func(w http.ResponseWriter, req *http.Request) {
-				response, _ := users.HandleGetProfilePic(w, req, db)
 				w.Header().Set("Content-Type", "application/json")
 				json.NewEncoder(w).Encode(response)
 			})
