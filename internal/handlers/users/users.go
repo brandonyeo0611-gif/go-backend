@@ -216,7 +216,7 @@ func HandleGetProfilePic(w http.ResponseWriter, r *http.Request, db *database.Da
 	).Scan(&response.UserID,&response.Username, &response.ProfileURL)
 
 	if err != nil {
-		log.Printf("Profile pic error for '%s': %v", response.Username, err)
+		log.Printf("Profile pic error for '%s': %v", Username, err)
 		return &api.Response{
 			Payload:   api.Payload{},
 			Messages:  []string{"Fail to get profile pic"},
