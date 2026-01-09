@@ -388,7 +388,8 @@ func HandleLikesComment(w http.ResponseWriter, r *http.Request, db *database.Dat
 
 func HandleGetPostsByCategory(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
 	category := r.URL.Query().Get("category")
-	posts, err := users.PostsByCategory(category, db)
+	relevance := r.URL.Query().Get("relevance")
+	posts, err := users.PostsByCategory(category, relevance, db)
 	if err != nil {
 		return &api.Response{
 			Payload:   api.Payload{},

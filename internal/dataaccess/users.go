@@ -3,6 +3,7 @@ package users
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/CVWO/sample-go-app/internal/database"
@@ -25,7 +26,7 @@ func List(db *database.Database) ([]models.User, error) {
 
 func CreateUser(user models.User, db *database.Database) error {
 
-	var id int                                                                                      // create a variable of id first
+	var id int                                                                                       // create a variable of id first
 	err := db.Conn.QueryRow("SELECT user_id FROM users WHERE username=$1 ", user.Username).Scan(&id) // fills id with existing user's user_id
 	if err == nil {
 		return ErrorUserNameTaken
@@ -64,14 +65,13 @@ func ChangeProfilePic(user models.User, db *database.Database) error {
 		`UPDATE users
 		SET profile_url = $1
 		WHERE username = $2 AND user_id = $3`,
-		*user.ProfileURL,user.Username, user.UserID,
+		*user.ProfileURL, user.Username, user.UserID,
 	)
 	if err != nil {
 		return err
 	}
 	return nil
 }
-
 
 // no. of arguments in scan same as no. of arguments in select
 
@@ -178,24 +178,29 @@ func UpdateLikesComment(commentlikes models.CommentLikes, db *database.Database)
 	return err
 }
 
-func PostsByCategory(category string, db *database.Database) ([]models.FullPostStruct, error) {
+func PostsByCategory(category string, relevance string, db *database.Database) ([]models.FullPostStruct, error) {
+	orderBy := "p.created_at DESC" // default
 
+	switch relevance {
+	case "leastRecent":
+		orderBy = "p.created_at ASC"
+	case "mostLikes":
+		orderBy = "likes DESC"
+	case "leastLikes":
+		orderBy = "likes ASC"
+	}
 	if category == "All" {
 
-		rows, err := db.Conn.Query(
-			`SELECT p.post_id, p.user_id, p.username, p.content, p.created_at, p.content_type, p.title, COALESCE(SUM(p1.like_value), 0) AS likes
-		FROM post p
-		LEFT JOIN post_likes p1 ON p.post_id = p1.post_id
-		GROUP BY
-    	p.post_id,
-   		p.user_id,
-    	p.username,
-    	p.content,
-    	p.created_at,
-    	p.content_type,
-    	p.title
-		ORDER BY p.created_at DESC, likes DESC`,
-		)
+		query := fmt.Sprintf(`
+SELECT p.post_id, p.user_id, p.username, p.content, p.created_at, p.content_type, p.title,
+COALESCE(SUM(p1.like_value), 0) AS likes
+FROM post p
+LEFT JOIN post_likes p1 ON p.post_id = p1.post_id
+WHERE content_type = $1
+GROUP BY p.post_id, p.user_id, p.username, p.content, p.created_at, p.content_type, p.title
+ORDER BY %s`, orderBy) // learning to inject with sprintf (values use placeholder $1,$2,$3 but ORDER BY or column names can use sprintf)
+
+		rows, err := db.Conn.Query(query)
 
 		if err != nil {
 			return nil, err
@@ -233,22 +238,16 @@ func PostsByCategory(category string, db *database.Database) ([]models.FullPostS
 
 	}
 
-	rows, err := db.Conn.Query(
-		`SELECT p.post_id, p.user_id, p.username, p.content, p.created_at, p.content_type, p.title, COALESCE(SUM(p1.like_value), 0) AS likes
-		FROM post p
-		LEFT JOIN post_likes p1 ON p.post_id = p1.post_id
-		WHERE content_type = $1
-		GROUP BY
-    	p.post_id,
-   		p.user_id,
-    	p.username,
-    	p.content,
-    	p.created_at,
-    	p.content_type,
-    	p.title
-		ORDER BY p.created_at DESC, likes DESC`,
-		category,
-	)
+	query := fmt.Sprintf(`
+SELECT p.post_id, p.user_id, p.username, p.content, p.created_at, p.content_type, p.title,
+COALESCE(SUM(p1.like_value), 0) AS likes
+FROM post p
+LEFT JOIN post_likes p1 ON p.post_id = p1.post_id
+WHERE content_type = $1
+GROUP BY p.post_id, p.user_id, p.username, p.content, p.created_at, p.content_type, p.title
+ORDER BY %s`, orderBy)
+
+	rows, err := db.Conn.Query(query, category)
 
 	if err != nil {
 		return nil, err
@@ -363,7 +362,8 @@ func GetIndividualLike(userID int, postID string, db *database.Database) (int, e
 }
 
 func RefreshAccessToken(RefreshToken string) {
-	
+
 }
+
 // SQL code
 // $1 is temporary placeholder, sorta like format string
