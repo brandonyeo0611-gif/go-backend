@@ -25,6 +25,11 @@ func GetRoutes(db *database.Database) func(r chi.Router) {
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(response)
 		})
+		r.Get("/history/{username}", func(w http.ResponseWriter, req *http.Request) {
+			response, _ := users.HandleGetHistory(w, req, db)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(response)
+		})
 		// login is post so data is more safe
 		// routes that connect frontend to backend
 		r.Post("/users", func(w http.ResponseWriter, req *http.Request) {

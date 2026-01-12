@@ -213,7 +213,7 @@ func HandleGetProfilePic(w http.ResponseWriter, r *http.Request, db *database.Da
 		`SELECT user_id, username, profile_url 
 		FROM users 
 		WHERE username = $1`, Username,
-	).Scan(&response.UserID,&response.Username, &response.ProfileURL)
+	).Scan(&response.UserID, &response.Username, &response.ProfileURL)
 
 	if err != nil {
 		log.Printf("Profile pic error for '%s': %v", Username, err)
@@ -441,6 +441,33 @@ func HandleGetComment(w http.ResponseWriter, r *http.Request, db *database.Datab
 func HandleGetPost(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
 	postID := chi.URLParam(r, "postID")
 	post, err := users.GetPost(postID, db)
+	if err != nil {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Failed to fetch post"},
+			ErrorCode: 5001,
+		}, nil
+	}
+
+	data, err := json.Marshal(post)
+	if err != nil {
+		return &api.Response{
+			Payload:   api.Payload{},
+			Messages:  []string{"Failed to marshal post"},
+			ErrorCode: 5002,
+		}, nil
+	}
+	return &api.Response{
+		Payload:   api.Payload{Data: data},
+		Messages:  []string{"successfully to fetch post"},
+		ErrorCode: 0,
+	}, nil
+}
+
+func HandleGetHistory(w http.ResponseWriter, r *http.Request, db *database.Database) (*api.Response, error) {
+	username := chi.URLParam(r, "username")
+	relevance := r.URL.Query().Get("relevance")
+	post, err := users.GetHistory(username, relevance, db)
 	if err != nil {
 		return &api.Response{
 			Payload:   api.Payload{},
