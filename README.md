@@ -16,7 +16,7 @@ Download and install Go by following the instructions [here](https://go.dev/doc/
 1. [Fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo#forking-a-repository) this repo.
 2. [Clone](https://docs.github.com/en/get-started/quickstart/fork-a-repo#cloning-your-forked-repository) **your** forked repo.
 3. Open your terminal and navigate to the directory containing your cloned project.
-4. Run `go run cmd/server/main.go` and head over to http://localhost:8000/users to view the response.
+4. Run `go run cmd/server/main.go` and head over to https://brandonwebforumgobackend.onrender.com/users to view the response.
 
 
 ### Navigating the code

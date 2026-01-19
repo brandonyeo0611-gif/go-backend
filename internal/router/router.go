@@ -11,7 +11,7 @@ import (
 func Setup(db *database.Database) chi.Router {
 	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
-        AllowedOrigins:   []string{"http://localhost:3000"}, // your frontend URL
+        AllowedOrigins:   []string{"http://localhost:3000","https://react-wipf.onrender.com",}, // your frontend URL
         AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
         AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
         AllowCredentials: true,
