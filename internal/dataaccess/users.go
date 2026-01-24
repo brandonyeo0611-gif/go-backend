@@ -196,7 +196,6 @@ SELECT p.post_id, p.user_id, p.username, p.content, p.created_at, p.content_type
 COALESCE(SUM(p1.like_value), 0) AS likes
 FROM post p
 LEFT JOIN post_likes p1 ON p.post_id = p1.post_id
-WHERE content_type = $1
 GROUP BY p.post_id, p.user_id, p.username, p.content, p.created_at, p.content_type, p.title
 ORDER BY %s`, orderBy) // learning to inject with sprintf (values use placeholder $1,$2,$3 but ORDER BY or column names can use sprintf)
 
